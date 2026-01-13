@@ -1,0 +1,18 @@
+{
+  "name": "civic-voice-backend",
+  "version": "1.0.0",
+  "description": "Backend for Civic Voice",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongoose": "^8.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
