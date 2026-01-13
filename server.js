@@ -7,10 +7,14 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-mongoose.connect(process.env.mongodb+srv://civicvoice:<Bhavik0223>@civicvoice.mrlvfql.mongodb.net/?appName=CivicVoice
-)
-.then(()=>console.log("✅ MongoDB Connected"))
-.catch(err=>console.log(err));
+
+const mongoose = require("mongoose");
+
+mongoose
+  .connect(process.env.mongodb+srv://civicvoice:Bhavik0223@civicvoice.mrlvfql.mongodb.net/CivicVoice?retryWrites=true&w=majority)
+  .then(() => console.log("MongoDB Connected"))
+  .catch((err) => console.error("MongoDB connection error:", err));
+
 
 app.get("/", (req, res) => {
   res.send("Civic Voice Backend is Running 🚀");
