@@ -8,7 +8,7 @@ app.use(express.json());
 app.use(cors());
 
 
-const mongoose = require("mongoose");
+
 
 mongoose
   .connect(process.env.mongodb+srv://civicvoice:Bhavik0223@civicvoice.mrlvfql.mongodb.net/CivicVoice?retryWrites=true&w=majority)
