@@ -2,6 +2,10 @@ const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
 
+/* TEST ROUTE */
+router.get("/", (req, res) => {
+  res.send("Auth API working 🚀");
+});
 
 // SIGNUP
 router.post("/signup", async (req, res) => {
