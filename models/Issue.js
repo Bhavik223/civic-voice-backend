@@ -1,12 +1,55 @@
 const mongoose = require("mongoose");
 
 const IssueSchema = new mongoose.Schema({
-  userId: mongoose.Schema.Types.ObjectId,
-  category: String,
-  description: String,
-  location: String,
-  status: { type: String, default: "Pending" },
-  createdAt: { type: Date, default: Date.now }
+
+  name: {
+    type: String,
+    required: true
+  },
+
+  email: {
+    type: String
+  },
+
+  location: {
+    type: String,
+    required: true
+  },
+
+  category: {
+    type: String,
+    required: true
+  },
+
+  description: {
+    type: String,
+    required: true
+  },
+
+  photo: {
+    type: String,
+    default: ""
+  },
+
+  latitude: {
+    type: Number
+  },
+
+  longitude: {
+    type: Number
+  },
+
+  status: {
+    type: String,
+    enum: ["Pending", "In Progress", "Resolved"],
+    default: "Pending"
+  },
+
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+
 });
 
 module.exports = mongoose.model("Issue", IssueSchema);
