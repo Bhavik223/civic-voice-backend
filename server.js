@@ -42,6 +42,12 @@ app.use("/api/auth", require("./routes/auth"));
 app.use("/api/issues", require("./routes/issues"));
 app.use("/api/admin", require("./routes/admin"));
 
+/* ---------- 404 API HANDLER ---------- */
+
+app.use("/api", (req, res) => {
+  res.status(404).json({ error: "API route not found" });
+});
+
 /* ---------- SERVER ---------- */
 
 const PORT = process.env.PORT || 5000;

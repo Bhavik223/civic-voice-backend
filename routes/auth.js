@@ -150,9 +150,9 @@ router.get("/check", async (req, res) => {
     }
 
     res.json({
-      loggedIn: true,
-      user
-    });
+loggedIn:true,
+user:req.user
+});
 
   } catch (error) {
 
