@@ -22,27 +22,31 @@ const upload = multer({ storage });
 /* ---------------- AUTH MIDDLEWARE ---------------- */
 
 const authMiddleware = async (req, res, next) => {
-  const userId = req.cookies.userId;
+  try {
+    const userId = req.cookies.userId;
 
-  if (!userId) {
-    return res.status(401).json({ message: "Not logged in" });
+    if (!userId) {
+      return res.status(401).json({ message: "Not logged in" });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(401).json({ message: "Invalid user" });
+    }
+
+    req.user = user;
+    next();
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Authentication error" });
   }
-
-  const user = await User.findById(userId);
-
-  if (!user) {
-    return res.status(401).json({ message: "Invalid user" });
-  }
-
-  req.user = user;
-
-  next();
 };
 
-/* ---------------- GET ALL ISSUES ---------------- */
+/* ---------------- GET ALL ISSUES (PUBLIC) ---------------- */
 
-router.get("/", authMiddleware, async (req, res) => {
-
+router.get("/", async (req, res) => {
   try {
 
     const issues = await Issue.find().sort({ createdAt: -1 });
@@ -53,10 +57,11 @@ router.get("/", authMiddleware, async (req, res) => {
 
     console.error(err);
 
-    res.status(500).json({ message: "Server error fetching issues" });
+    res.status(500).json({
+      message: "Server error fetching issues"
+    });
 
   }
-
 });
 
 /* ---------------- CREATE NEW ISSUE ---------------- */
@@ -74,11 +79,9 @@ router.post("/", authMiddleware, upload.single("photo"), async (req, res) => {
   } = req.body;
 
   if (!location || !category || !description) {
-
     return res.status(400).json({
       message: "Location, category and description are required"
     });
-
   }
 
   try {
@@ -146,7 +149,7 @@ router.get("/my", authMiddleware, async (req, res) => {
 
 });
 
-/* ---------------- ADMIN UPDATE STATUS ---------------- */
+/* ---------------- ADMIN UPDATE ISSUE STATUS ---------------- */
 
 router.put("/:id", authMiddleware, async (req, res) => {
 
@@ -155,14 +158,16 @@ router.put("/:id", authMiddleware, async (req, res) => {
   try {
 
     const updatedIssue = await Issue.findByIdAndUpdate(
-
       req.params.id,
-
       { status },
-
       { new: true }
-
     );
+
+    if (!updatedIssue) {
+      return res.status(404).json({
+        message: "Issue not found"
+      });
+    }
 
     res.json({
       message: "Issue status updated",
