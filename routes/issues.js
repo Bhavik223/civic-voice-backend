@@ -5,169 +5,178 @@ const User = require("../models/User");
 const multer = require("multer");
 const path = require("path");
 
-/* ---------------- PHOTO UPLOAD SETUP ---------------- */
+/* PHOTO UPLOAD SETUP */
 
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/");
-  },
-  filename: function (req, file, cb) {
-    const uniqueName = Date.now() + path.extname(file.originalname);
-    cb(null, uniqueName);
-  }
+destination: function(req,file,cb){
+cb(null,"uploads/");
+},
+filename: function(req,file,cb){
+const uniqueName=Date.now()+path.extname(file.originalname);
+cb(null,uniqueName);
+}
 });
 
-const upload = multer({ storage });
+const upload = multer({storage});
 
-/* ---------------- AUTH MIDDLEWARE ---------------- */
+/* AUTH MIDDLEWARE */
 
-const authMiddleware = async (req, res, next) => {
-  try {
-    const userId = req.cookies.userId;
+const authMiddleware = async (req,res,next)=>{
 
-    if (!userId) {
-      return res.status(401).json({ message: "Not logged in" });
-    }
+try{
 
-    const user = await User.findById(userId);
+const userId=req.cookies.userId;
 
-    if (!user) {
-      return res.status(401).json({ message: "Invalid user" });
-    }
+if(!userId){
+return res.status(401).json({message:"Not logged in"});
+}
 
-    req.user = user;
-    next();
+const user=await User.findById(userId);
 
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Authentication error" });
-  }
+if(!user){
+return res.status(401).json({message:"Invalid user"});
+}
+
+req.user=user;
+
+next();
+
+}catch(err){
+
+console.error(err);
+
+res.status(500).json({message:"Authentication error"});
+
+}
+
 };
 
-/* ---------------- GET ALL ISSUES (PUBLIC) ---------------- */
+/* GET ALL ISSUES */
 
-router.get("/", async (req, res) => {
-  try {
+router.get("/",async(req,res)=>{
 
-    const issues = await Issue.find().sort({ createdAt: -1 });
+try{
 
-    res.json(issues);
+const issues=await Issue.find().sort({createdAt:-1});
 
-  } catch (err) {
+res.json(issues);
 
-    console.error(err);
+}catch(err){
 
-    res.status(500).json({
-      message: "Server error fetching issues"
-    });
+console.error(err);
 
-  }
-});
+res.status(500).json({message:"Server error fetching issues"});
 
-/* ---------------- CREATE NEW ISSUE ---------------- */
-
-router.post("/", authMiddleware, upload.single("photo"), async (req, res) => {
-
-  const { name, email, location, category, description, latitude, longitude } = req.body;
-
-  if (!location || !category || !description) {
-    return res.status(400).json({
-      message: "Location, category and description are required"
-    });
-  }
-
-  try {
-
-    const newIssue = new Issue({
-      name: name || req.user.name,
-      email: email || req.user.email,
-      location,
-      category,
-      description,
-      photo: req.file ? req.file.filename : "",
-      latitude,
-      longitude,
-      status: "Pending"
-    });
-
-    await newIssue.save();
-
-    res.status(201).json({
-      message: "Issue reported successfully",
-      issue: newIssue
-    });
-
-  } catch (err) {
-
-    console.error(err);
-
-    res.status(500).json({
-      message: "Server error creating issue"
-    });
-
-  }
+}
 
 });
 
-/* ---------------- GET USER ISSUES ---------------- */
+/* CREATE ISSUE */
 
-router.get("/my", authMiddleware, async (req, res) => {
+router.post("/",authMiddleware,upload.single("photo"),async(req,res)=>{
 
-  try {
+try{
 
-    const myIssues = await Issue.find({
-      email: req.user.email
-    }).sort({ createdAt: -1 });
+const {name,email,location,category,description,latitude,longitude}=req.body;
 
-    res.json(myIssues);
+if(!location || !category || !description){
+return res.status(400).json({
+message:"Location, category and description required"
+});
+}
 
-  } catch (err) {
+const newIssue=new Issue({
 
-    console.error(err);
-
-    res.status(500).json({
-      message: "Server error fetching your issues"
-    });
-
-  }
+name:name || req.user.name,
+email:email || req.user.email,
+location,
+category,
+description,
+photo:req.file ? req.file.filename : "",
+latitude,
+longitude,
+status:"Pending"
 
 });
 
-/* ---------------- UPDATE ISSUE STATUS (ADMIN) ---------------- */
+await newIssue.save();
 
-router.put("/:id", authMiddleware, async (req, res) => {
+res.status(201).json({
 
-  const { status } = req.body;
-
-  try {
-
-    const updatedIssue = await Issue.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
-
-    if (!updatedIssue) {
-      return res.status(404).json({
-        message: "Issue not found"
-      });
-    }
-
-    res.json({
-      message: "Issue status updated",
-      issue: updatedIssue
-    });
-
-  } catch (err) {
-
-    console.error(err);
-
-    res.status(500).json({
-      message: "Server error updating issue"
-    });
-
-  }
+message:"Issue reported successfully",
+issue:newIssue
 
 });
 
-module.exports = router;
+}catch(err){
+
+console.error(err);
+
+res.status(500).json({message:"Server error creating issue"});
+
+}
+
+});
+
+/* GET USER ISSUES */
+
+router.get("/my",authMiddleware,async(req,res)=>{
+
+try{
+
+const myIssues=await Issue.find({
+email:req.user.email
+}).sort({createdAt:-1});
+
+res.json(myIssues);
+
+}catch(err){
+
+console.error(err);
+
+res.status(500).json({message:"Server error fetching your issues"});
+
+}
+
+});
+
+/* UPDATE STATUS */
+
+router.put("/:id",authMiddleware,async(req,res)=>{
+
+try{
+
+const {status}=req.body;
+
+const updatedIssue=await Issue.findByIdAndUpdate(
+
+req.params.id,
+{status},
+{new:true}
+
+);
+
+if(!updatedIssue){
+
+return res.status(404).json({message:"Issue not found"});
+
+}
+
+res.json({
+
+message:"Issue status updated",
+issue:updatedIssue
+
+});
+
+}catch(err){
+
+console.error(err);
+
+res.status(500).json({message:"Server error updating issue"});
+
+}
+
+});
+
+module.exports=router;
