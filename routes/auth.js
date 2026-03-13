@@ -1,143 +1,129 @@
-const express = require("express");
-const router = express.Router();
-const User = require("../models/User");
-const bcrypt = require("bcryptjs");
+const express=require("express");
+const router=express.Router();
+const User=require("../models/User");
 
-/* ---------------- SIGNUP ---------------- */
-router.post("/signup", async (req, res) => {
-  try {
+/* SIGNUP */
 
-    const { name, email, password } = req.body;
+router.post("/signup",async(req,res)=>{
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: "All fields required" });
-    }
+try{
 
-    const lowerEmail = email.toLowerCase();
+const {name,email,password}=req.body;
 
-    const userExists = await User.findOne({ email: lowerEmail });
+if(!name || !email || !password){
+return res.status(400).json({message:"All fields required"});
+}
 
-    if (userExists) {
-      return res.status(400).json({ message: "Email already registered" });
-    }
+const lowerEmail=email.toLowerCase();
 
+const existing=await User.findOne({email:lowerEmail});
 
+if(existing){
+return res.status(400).json({message:"Email already exists"});
+}
 
-  const user = await User.create({
-  name,
-  email: lowerEmail,
-  password: password,
-  role: "user"
+const user=await User.create({
+name,
+email:lowerEmail,
+password
 });
 
+res.json({message:"Signup success"});
 
-    res.status(201).json({
-      message: "Signup successful",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email
-      }
-    });
+}catch(err){
 
-  } catch (error) {
-    console.error("Signup Error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-});
+console.log(err);
+res.status(500).json({message:"Server error"});
 
-
-/* ---------------- LOGIN ---------------- */
-router.post("/login", async (req, res) => {
-  try {
-
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ message: "All fields required" });
-    }
-
-    const lowerEmail = email.toLowerCase();
-
-    const user = await User.findOne({ email: lowerEmail });
-
-    if (!user) {
-      return res.status(400).json({ message: "Invalid email or password" });
-    }
-
-const isMatch = await user.matchPassword(password);
-
-    if (!isMatch) {
-      return res.status(400).json({ message: "Invalid email or password" });
-    }
-
-    res.cookie("userId", user._id.toString(), {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      maxAge: 24 * 60 * 60 * 1000
-    });
-
-    res.json({
-      message: "Login successful",
-      role: user.role || "user",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email
-      }
-    });
-
-  } catch (error) {
-    console.error("Login Error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-
-/* ---------------- CHECK LOGIN ---------------- */
-router.get("/check", async (req, res) => {
-  try {
-
-    const userId = req.cookies.userId;
-
-    if (!userId) {
-      return res.json({ loggedIn: false });
-    }
-
-    const user = await User.findById(userId).select("-password");
-
-    if (!user) {
-      return res.json({ loggedIn: false });
-    }
-
-    res.json({
-      loggedIn: true,
-      user: user
-    });
-
-  } catch (error) {
-    console.error("Check Login Error:", error);
-    res.status(500).json({
-      loggedIn: false,
-      message: "Server error"
-    });
-  }
-});
-
-
-/* ---------------- LOGOUT ---------------- */
-router.post("/logout", (req, res) => {
-
-  res.clearCookie("userId", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none"
-  });
-
-  res.json({ message: "Logged out successfully" });
+}
 
 });
 
+/* LOGIN */
 
-module.exports = router;
+router.post("/login",async(req,res)=>{
+
+try{
+
+const {email,password}=req.body;
+
+const user=await User.findOne({email:email.toLowerCase()});
+
+if(!user){
+return res.status(400).json({message:"Invalid credentials"});
+}
+
+const match=await user.matchPassword(password);
+
+if(!match){
+return res.status(400).json({message:"Invalid credentials"});
+}
+
+res.cookie("userId",user._id,{
+httpOnly:true,
+secure:true,
+sameSite:"none",
+maxAge:86400000
+});
+
+res.json({
+message:"Login success",
+role:user.role,
+user:user
+});
+
+}catch(err){
+
+console.log(err);
+res.status(500).json({message:"Server error"});
+
+}
+
+});
+
+/* CHECK LOGIN */
+
+router.get("/check",async(req,res)=>{
+
+try{
+
+const id=req.cookies.userId;
+
+if(!id){
+return res.json({loggedIn:false});
+}
+
+const user=await User.findById(id).select("-password");
+
+if(!user){
+return res.json({loggedIn:false});
+}
+
+res.json({
+loggedIn:true,
+user
+});
+
+}catch(err){
+
+res.status(500).json({loggedIn:false});
+
+}
+
+});
+
+/* LOGOUT */
+
+router.post("/logout",(req,res)=>{
+
+res.clearCookie("userId",{
+httpOnly:true,
+secure:true,
+sameSite:"none"
+});
+
+res.json({message:"Logged out"});
+
+});
+
+module.exports=router;

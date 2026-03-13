@@ -9,10 +9,9 @@ const app = express();
 
 /* ---------- MIDDLEWARE ---------- */
 
-// Parse JSON
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// CORS configuration
 app.use(cors({
   origin: [
     "https://civicvoice2.netlify.app",
@@ -22,59 +21,39 @@ app.use(cors({
   credentials: true
 }));
 
-// Cookie parser
 app.use(cookieParser());
 
 /* ---------- STATIC FILES ---------- */
 
-// Serve uploaded images
 app.use("/uploads", express.static("uploads"));
-/* ---------- MONGODB CONNECTION ---------- */
 
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => {
-  console.log("✅ MongoDB Connected");
-})
-.catch((err) => {
-  console.error("❌ MongoDB connection error:", err);
+/* ---------- MONGODB ---------- */
+
+mongoose.connect(process.env.MONGO_URI)
+.then(()=>console.log("✅ MongoDB Connected"))
+.catch(err=>console.log("Mongo Error:",err));
+
+/* ---------- ROUTES ---------- */
+
+app.get("/",(req,res)=>{
+res.send("Civic Voice Backend Running");
 });
 
-/* ---------- BASIC TEST ROUTE ---------- */
+app.use("/api/auth",require("./routes/auth"));
+app.use("/api/issues",require("./routes/issues"));
+app.use("/api/admin",require("./routes/admin"));
 
-app.get("/", (req, res) => {
-  res.send("🚀 Civic Voice Backend is Running");
-});
+/* ---------- ERROR HANDLER ---------- */
 
-/* ---------- API ROUTES ---------- */
-
-app.use("/api/auth", require("./routes/auth"));
-app.use("/api/issues", require("./routes/issues"));
-app.use("/api/admin", require("./routes/admin"));
-
-/* ---------- 404 API HANDLER ---------- */
-
-app.use("/api", (req, res) => {
-  res.status(404).json({
-    error: "API route not found"
-  });
-});
-
-/* ---------- GLOBAL ERROR HANDLER ---------- */
-
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-    message: "Internal Server Error"
-  });
+app.use((err,req,res,next)=>{
+console.error(err);
+res.status(500).json({message:"Server error"});
 });
 
 /* ---------- SERVER ---------- */
 
-const PORT = process.env.PORT || 5000;
+const PORT=process.env.PORT||5000;
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+app.listen(PORT,()=>{
+console.log("Server running on port "+PORT);
 });

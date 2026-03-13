@@ -1,27 +1,39 @@
-const express = require("express");
-const router = express.Router();
-const Issue = require("../models/Issue");
-const User = require("../models/User");
-const multer = require("multer");
-const path = require("path");
+const express=require("express");
+const router=express.Router();
+const Issue=require("../models/Issue");
+const User=require("../models/User");
+const multer=require("multer");
+const path=require("path");
+const fs=require("fs");
 
-/* PHOTO UPLOAD SETUP */
+/* ---------- CREATE UPLOAD FOLDER ---------- */
 
-const storage = multer.diskStorage({
-destination: function(req,file,cb){
-cb(null,"uploads/");
+const uploadPath="uploads";
+
+if(!fs.existsSync(uploadPath)){
+fs.mkdirSync(uploadPath);
+}
+
+/* ---------- MULTER STORAGE ---------- */
+
+const storage=multer.diskStorage({
+
+destination:function(req,file,cb){
+cb(null,uploadPath);
 },
-filename: function(req,file,cb){
+
+filename:function(req,file,cb){
 const uniqueName=Date.now()+path.extname(file.originalname);
 cb(null,uniqueName);
 }
+
 });
 
-const upload = multer({storage});
+const upload=multer({storage});
 
-/* AUTH MIDDLEWARE */
+/* ---------- AUTH ---------- */
 
-const authMiddleware = async (req,res,next)=>{
+const authMiddleware=async(req,res,next)=>{
 
 try{
 
@@ -43,15 +55,14 @@ next();
 
 }catch(err){
 
-console.error(err);
-
-res.status(500).json({message:"Authentication error"});
+console.log(err);
+res.status(500).json({message:"Auth error"});
 
 }
 
 };
 
-/* GET ALL ISSUES */
+/* ---------- GET ALL ISSUES ---------- */
 
 router.get("/",async(req,res)=>{
 
@@ -63,15 +74,14 @@ res.json(issues);
 
 }catch(err){
 
-console.error(err);
-
-res.status(500).json({message:"Server error fetching issues"});
+console.log(err);
+res.status(500).json({message:"Server error"});
 
 }
 
 });
 
-/* CREATE ISSUE */
+/* ---------- CREATE ISSUE ---------- */
 
 router.post("/",authMiddleware,upload.single("photo"),async(req,res)=>{
 
@@ -80,9 +90,7 @@ try{
 const {name,email,location,category,description,latitude,longitude}=req.body;
 
 if(!location || !category || !description){
-return res.status(400).json({
-message:"Location, category and description required"
-});
+return res.status(400).json({message:"Required fields missing"});
 }
 
 const newIssue=new Issue({
@@ -92,7 +100,7 @@ email:email || req.user.email,
 location,
 category,
 description,
-photo:req.file ? req.file.filename : "",
+photo:req.file ? "/uploads/"+req.file.filename : "",
 latitude,
 longitude,
 status:"Pending"
@@ -102,45 +110,41 @@ status:"Pending"
 await newIssue.save();
 
 res.status(201).json({
-
-message:"Issue reported successfully",
+message:"Issue submitted",
 issue:newIssue
-
 });
 
 }catch(err){
 
-console.error(err);
-
+console.log(err);
 res.status(500).json({message:"Server error creating issue"});
 
 }
 
 });
 
-/* GET USER ISSUES */
+/* ---------- USER ISSUES ---------- */
 
 router.get("/my",authMiddleware,async(req,res)=>{
 
 try{
 
-const myIssues=await Issue.find({
+const issues=await Issue.find({
 email:req.user.email
 }).sort({createdAt:-1});
 
-res.json(myIssues);
+res.json(issues);
 
 }catch(err){
 
-console.error(err);
-
-res.status(500).json({message:"Server error fetching your issues"});
+console.log(err);
+res.status(500).json({message:"Server error"});
 
 }
 
 });
 
-/* UPDATE STATUS */
+/* ---------- UPDATE STATUS ---------- */
 
 router.put("/:id",authMiddleware,async(req,res)=>{
 
@@ -148,32 +152,18 @@ try{
 
 const {status}=req.body;
 
-const updatedIssue=await Issue.findByIdAndUpdate(
-
+const issue=await Issue.findByIdAndUpdate(
 req.params.id,
 {status},
 {new:true}
-
 );
 
-if(!updatedIssue){
-
-return res.status(404).json({message:"Issue not found"});
-
-}
-
-res.json({
-
-message:"Issue status updated",
-issue:updatedIssue
-
-});
+res.json(issue);
 
 }catch(err){
 
-console.error(err);
-
-res.status(500).json({message:"Server error updating issue"});
+console.log(err);
+res.status(500).json({message:"Server error"});
 
 }
 
