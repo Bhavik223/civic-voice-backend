@@ -68,15 +68,7 @@ router.get("/", async (req, res) => {
 
 router.post("/", authMiddleware, upload.single("photo"), async (req, res) => {
 
-  const {
-    name,
-    email,
-    location,
-    category,
-    description,
-    latitude,
-    longitude
-  } = req.body;
+  const { name, email, location, category, description, latitude, longitude } = req.body;
 
   if (!location || !category || !description) {
     return res.status(400).json({
@@ -86,27 +78,19 @@ router.post("/", authMiddleware, upload.single("photo"), async (req, res) => {
 
   try {
 
-    const newIssue = await Issue.create({
-
+    const newIssue = new Issue({
       name: name || req.user.name,
-
       email: email || req.user.email,
-
       location,
-
       category,
-
       description,
-
       photo: req.file ? req.file.filename : "",
-
       latitude,
-
       longitude,
-
       status: "Pending"
-
     });
+
+    await newIssue.save();
 
     res.status(201).json({
       message: "Issue reported successfully",
@@ -149,7 +133,7 @@ router.get("/my", authMiddleware, async (req, res) => {
 
 });
 
-/* ---------------- ADMIN UPDATE ISSUE STATUS ---------------- */
+/* ---------------- UPDATE ISSUE STATUS (ADMIN) ---------------- */
 
 router.put("/:id", authMiddleware, async (req, res) => {
 
