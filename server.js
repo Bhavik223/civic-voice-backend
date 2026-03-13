@@ -28,8 +28,7 @@ app.use(cookieParser());
 /* ---------- STATIC FILES ---------- */
 
 // Serve uploaded images
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
+app.use("/uploads", express.static("uploads"));
 /* ---------- MONGODB CONNECTION ---------- */
 
 mongoose.connect(process.env.MONGO_URI, {
