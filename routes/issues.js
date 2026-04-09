@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const Issue = require("../models/Issue");
-const User = require("../models/User");
 const multer = require("multer");
 
 /* ---------- CLOUDINARY SETUP ---------- */
@@ -25,34 +24,13 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage });
 
-/* ---------- AUTH ---------- */
-const authMiddleware = async (req, res, next) => {
-  try {
-    const userId = req.cookies.userId;
-
-    if (!userId) {
-      return res.status(401).json({ message: "Not logged in" });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(401).json({ message: "Invalid user" });
-    }
-
-    req.user = user;
-    next();
-
-  } catch (err) {
-    res.status(500).json({ message: "Auth error" });
-  }
-};
-
 /* ---------- GET ALL ISSUES ---------- */
 router.get("/", async (req, res) => {
   try {
     const issues = await Issue.find().sort({ createdAt: -1 });
     res.json(issues);
   } catch (err) {
+    console.log(err);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -86,11 +64,7 @@ router.post("/", upload.single("photo"), async (req, res) => {
     });
 
   } catch (err) {
-    console.log("ERROR:", err); // 👈 ADD THIS FOR DEBUG
-    res.status(500).json({ message: "Server error creating issue" });
-  }
-});
-  } catch (err) {
+    console.log("ERROR:", err);
     res.status(500).json({ message: "Server error creating issue" });
   }
 });
