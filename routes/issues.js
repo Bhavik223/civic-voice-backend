@@ -62,19 +62,22 @@ router.post("/", upload.single("photo"), async (req, res) => {
   try {
     const { name, email, location, category, description, latitude, longitude } = req.body;
 
-const newIssue = new Issue({
+    if (!name || !location || !category || !description) {
+      return res.status(400).json({ message: "All fields required" });
+    }
 
-  name: name || req.user?.name,
-  email: email || req.user?.email,
-  location,
-  category,
-  description,
-  photo: req.file?.path || "",   // ✅ FIXED
-  latitude,
-  longitude,
-  status: "Pending"
+    const newIssue = new Issue({
+      name,
+      email,
+      location,
+      category,
+      description,
+      photo: req.file?.path || "",
+      latitude,
+      longitude,
+      status: "Pending"
+    });
 
-});
     await newIssue.save();
 
     res.status(201).json({
@@ -82,6 +85,11 @@ const newIssue = new Issue({
       issue: newIssue
     });
 
+  } catch (err) {
+    console.log("ERROR:", err); // 👈 ADD THIS FOR DEBUG
+    res.status(500).json({ message: "Server error creating issue" });
+  }
+});
   } catch (err) {
     res.status(500).json({ message: "Server error creating issue" });
   }
