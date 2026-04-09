@@ -13,12 +13,15 @@ cloudinary.config({
   api_secret: process.env.CLOUD_SECRET
 });
 
-/* ---------- MULTER STORAGE ---------- */
+/* ---------- MULTER CLOUDINARY STORAGE ---------- */
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: "civic_voice",
-    allowed_formats: ["jpg", "png", "jpeg"]
+  params: async (req, file) => {
+    return {
+      folder: "civic_voice",
+      format: file.mimetype.split("/")[1], // jpg/png
+      public_id: Date.now().toString()
+    };
   }
 });
 
@@ -53,7 +56,7 @@ router.post("/", upload.single("photo"), async (req, res) => {
       location,
       category,
       description,
-      photo: req.file?.path || "",
+      photo: req.file?.path || "", // Cloudinary URL
       latitude,
       longitude,
       status: "Pending"
