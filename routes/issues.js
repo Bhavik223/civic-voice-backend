@@ -58,22 +58,23 @@ router.get("/", async (req, res) => {
 });
 
 /* ---------- CREATE ISSUE ---------- */
-router.post("/", authMiddleware, upload.single("photo"), async (req, res) => {
+router.post("/", upload.single("photo"), async (req, res) => {
   try {
     const { name, email, location, category, description, latitude, longitude } = req.body;
 
-    const newIssue = new Issue({
-      name: name || req.user.name,
-      email: email || req.user.email,
-      location,
-      category,
-      description,
-      photo: req.file ? req.file.path : "", // 🔥 CLOUDINARY URL
-      latitude,
-      longitude,
-      status: "Pending"
-    });
+const newIssue = new Issue({
 
+  name: name || req.user?.name,
+  email: email || req.user?.email,
+  location,
+  category,
+  description,
+  photo: req.file?.path || "",   // ✅ FIXED
+  latitude,
+  longitude,
+  status: "Pending"
+
+});
     await newIssue.save();
 
     res.status(201).json({
