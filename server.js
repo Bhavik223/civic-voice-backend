@@ -2,16 +2,11 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const path = require("path");
 require("dotenv").config();
 
 const app = express();
-const adminRoutes = require("./routes/admin");
-app.use("/api/admin", adminRoutes);
-/* ---------- MIDDLEWARE ---------- */
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+/* ---------- MIDDLEWARE ---------- */
 
 app.use(cors({
   origin: [
@@ -22,6 +17,8 @@ app.use(cors({
   credentials: true
 }));
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 /* ---------- STATIC FILES ---------- */
@@ -37,7 +34,7 @@ mongoose.connect(process.env.MONGO_URI)
 /* ---------- ROUTES ---------- */
 
 app.get("/",(req,res)=>{
-res.send("Civic Voice Backend Running");
+  res.send("Civic Voice Backend Running");
 });
 
 app.use("/api/auth",require("./routes/auth"));
@@ -47,8 +44,8 @@ app.use("/api/admin",require("./routes/admin"));
 /* ---------- ERROR HANDLER ---------- */
 
 app.use((err,req,res,next)=>{
-console.error(err);
-res.status(500).json({message:"Server error"});
+  console.error(err);
+  res.status(500).json({message:"Server error"});
 });
 
 /* ---------- SERVER ---------- */
@@ -56,5 +53,5 @@ res.status(500).json({message:"Server error"});
 const PORT=process.env.PORT||5000;
 
 app.listen(PORT,()=>{
-console.log("Server running on port "+PORT);
+  console.log("Server running on port "+PORT);
 });
