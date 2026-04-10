@@ -9,12 +9,7 @@ const app = express();
 /* ---------- MIDDLEWARE ---------- */
 
 app.use(cors({
-  origin: [
-    "https://civicvoice2.netlify.app",
-"https://civicvoice23.netlify.app", 
-    "http://localhost:5500",
-    "http://127.0.0.1:5500"
-  ],
+  origin: ture
   credentials: true
 }));
 
