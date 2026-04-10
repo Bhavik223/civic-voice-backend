@@ -9,7 +9,7 @@ const app = express();
 /* ---------- MIDDLEWARE ---------- */
 
 app.use(cors({
-  origin: ture,
+  origin: true,
   credentials: true
 }));
 
