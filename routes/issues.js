@@ -1,6 +1,9 @@
 const express = require("express");
-const router = express.Router();   // ✅ MUST BE HERE
+const router = express.Router();
+
 const Issue = require("../models/Issue");
+const User = require("../models/User");
+
 const multer = require("multer");
 
 /* ---------- CLOUDINARY SETUP ---------- */
@@ -25,39 +28,87 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage });
 
-/* ---------- GET ALL ISSUES ---------- */
+/* ===================================================== */
+/* ================== GET MY ISSUES ===================== */
+/* ===================================================== */
+
+router.get("/my", async (req, res) => {
+  try {
+    const userId = req.cookies.userId;
+
+    if (!userId) {
+      return res.status(401).json([]);
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json([]);
+    }
+
+    const issues = await Issue.find({ email: user.email })
+      .sort({ createdAt: -1 });
+
+    res.json(issues);
+
+  } catch (err) {
+    console.log("MY ISSUES ERROR:", err);
+    res.status(500).json([]);
+  }
+});
+
+/* ===================================================== */
+/* ================== GET ALL ISSUES ==================== */
+/* ===================================================== */
+
 router.get("/", async (req, res) => {
   try {
-    const issues = await Issue.find().sort({ createdAt: -1 });
+    const issues = await Issue.find()
+      .sort({ createdAt: -1 });
+
     res.json(issues);
+
   } catch (err) {
-    console.log(err);
+    console.log("GET ALL ERROR:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-/* ---------- CREATE ISSUE ---------- */
+/* ===================================================== */
+/* ================== CREATE ISSUE ====================== */
+/* ===================================================== */
+
 router.post("/", upload.single("photo"), async (req, res) => {
   try {
 
-    console.log("ENV:", process.env.CLOUD_NAME);
     console.log("BODY:", req.body);
     console.log("FILE:", req.file);
 
-    const { name, email, location, category, description, latitude, longitude } = req.body;
+    const {
+      name,
+      email,
+      location,
+      category,
+      description,
+      latitude,
+      longitude
+    } = req.body;
 
+    /* VALIDATION */
     if (!name || !location || !category || !description) {
-      return res.status(400).json({ message: "All fields required" });
+      return res.status(400).json({
+        message: "All fields required"
+      });
     }
 
+    /* IMAGE URL */
     let photoUrl = "";
 
     if (req.file && req.file.path) {
-      photoUrl = req.file.path;
-    } else {
-      console.log("⚠️ No image uploaded or Cloudinary failed");
+      photoUrl = req.file.path; // Cloudinary URL
     }
 
+    /* CREATE ISSUE */
     const newIssue = new Issue({
       name,
       email,
@@ -65,8 +116,8 @@ router.post("/", upload.single("photo"), async (req, res) => {
       category,
       description,
       photo: photoUrl,
-      latitude,
-      longitude,
+      latitude: latitude || "",
+      longitude: longitude || "",
       status: "Pending"
     });
 
@@ -78,11 +129,13 @@ router.post("/", upload.single("photo"), async (req, res) => {
     });
 
   } catch (err) {
-    console.log("🔥 FULL ERROR:", err);
+    console.log("CREATE ISSUE ERROR:", err);
     res.status(500).json({
       message: err.message || "Server error creating issue"
     });
   }
 });
+
+/* ===================================================== */
 
 module.exports = router;
