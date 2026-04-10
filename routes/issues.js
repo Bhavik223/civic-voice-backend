@@ -6,7 +6,7 @@ const User = require("../models/User");
 
 const multer = require("multer");
 
-/* ---------- CLOUDINARY SETUP ---------- */
+/* ---------- CLOUDINARY ---------- */
 const cloudinary = require("cloudinary").v2;
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
@@ -16,9 +16,9 @@ cloudinary.config({
   api_secret: process.env.CLOUD_SECRET
 });
 
-/* ---------- MULTER STORAGE ---------- */
+/* ---------- STORAGE ---------- */
 const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
+  cloudinary,
   params: async (req, file) => ({
     folder: "civic_voice",
     format: file.mimetype.split("/")[1],
@@ -34,6 +34,7 @@ const upload = multer({ storage });
 
 router.get("/my", async (req, res) => {
   try {
+
     const userId = req.cookies.userId;
 
     if (!userId) {
@@ -63,11 +64,8 @@ router.get("/my", async (req, res) => {
 
 router.get("/", async (req, res) => {
   try {
-    const issues = await Issue.find()
-      .sort({ createdAt: -1 });
-
+    const issues = await Issue.find().sort({ createdAt: -1 });
     res.json(issues);
-
   } catch (err) {
     console.log("GET ALL ERROR:", err);
     res.status(500).json({ message: "Server error" });
@@ -81,12 +79,19 @@ router.get("/", async (req, res) => {
 router.post("/", upload.single("photo"), async (req, res) => {
   try {
 
-    console.log("BODY:", req.body);
-    console.log("FILE:", req.file);
+    const userId = req.cookies.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Login required" });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
     const {
-      name,
-      email,
       location,
       category,
       description,
@@ -95,23 +100,22 @@ router.post("/", upload.single("photo"), async (req, res) => {
     } = req.body;
 
     /* VALIDATION */
-    if (!name || !location || !category || !description) {
+    if (!location || !category || !description) {
       return res.status(400).json({
         message: "All fields required"
       });
     }
 
-    /* IMAGE URL */
+    /* IMAGE */
     let photoUrl = "";
-
     if (req.file && req.file.path) {
-      photoUrl = req.file.path; // Cloudinary URL
+      photoUrl = req.file.path;
     }
 
-    /* CREATE ISSUE */
+    /* CREATE ISSUE (FIXED) */
     const newIssue = new Issue({
-      name,
-      email,
+      name: user.name,        // ✅ FIX
+      email: user.email,      // ✅ FIX
       location,
       category,
       description,
@@ -131,7 +135,7 @@ router.post("/", upload.single("photo"), async (req, res) => {
   } catch (err) {
     console.log("CREATE ISSUE ERROR:", err);
     res.status(500).json({
-      message: err.message || "Server error creating issue"
+      message: "Server error creating issue"
     });
   }
 });
