@@ -6,7 +6,8 @@ const path = require("path");
 require("dotenv").config();
 
 const app = express();
-
+const adminRoutes = require("./routes/admin");
+app.use("/api/admin", adminRoutes);
 /* ---------- MIDDLEWARE ---------- */
 
 app.use(express.json());
