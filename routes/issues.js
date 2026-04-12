@@ -113,18 +113,19 @@ router.post("/", upload.single("photo"), async (req, res) => {
     }
 
     /* CREATE ISSUE (FIXED) */
-    const newIssue = new Issue({
-      name: user.name,        // ✅ FIX
-      email: user.email,      // ✅ FIX
-      location,
-      category,
-      description,
-      photo: photoUrl,
-      latitude: latitude || "",
-      longitude: longitude || "",
-      status: "Pending"
-    });
+const newIssue = new Issue({
+  name,
+  email,
+  location,
+  category,
+  description,
+  photo: photoUrl,
 
+  latitude: latitude ? Number(latitude) : null,
+  longitude: longitude ? Number(longitude) : null,
+
+  status: "Pending"
+});
     await newIssue.save();
 
     res.status(201).json({
