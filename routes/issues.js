@@ -91,13 +91,17 @@ router.post("/", upload.single("photo"), async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const {
-      location,
-      category,
-      description,
-      latitude,
-      longitude
-    } = req.body;
+  const {
+  location,
+  category,
+  description,
+  latitude,
+  longitude
+} = req.body;
+
+// ✅ ADD THIS HERE
+const name = user.name;
+const email = user.email;
 
     /* VALIDATION */
     if (!location || !category || !description) {
